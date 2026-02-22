@@ -1,0 +1,31 @@
+# ClearerVoice-Studio-Easy Requirements
+# Core ML/DL frameworks
+# Install GPU version of PyTorch (recommended for NVIDIA GPUs):
+# pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu126
+# For CPU-only version:
+# pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu
+torch>=2.0.0
+torchaudio>=2.0.0
+numpy>=1.22.0
+
+# Audio processing
+librosa>=0.10.0
+soundfile>=0.12.0
+pydub>=0.25.0
+
+# Model dependencies
+einops>=0.6.0
+rotary_embedding_torch>=0.3.0
+torchinfo>=1.8.0
+
+# Configuration and utilities
+PyYAML>=6.0
+yamlargparse>=1.31.0
+tqdm>=4.65.0
+
+# Web interface (optional)
+Flask>=3.0.0
+flask-cors>=4.0.0
+
+# HuggingFace model download
+huggingface_hub>=0.16.0

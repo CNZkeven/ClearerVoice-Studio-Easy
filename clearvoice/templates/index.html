@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ClearerVoice Studio</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --ios-primary: #007AFF; --ios-secondary: #5856D6; --ios-success: #34C759; --ios-warning: #FF9500; --ios-danger: #FF3B30; --ios-bg: #F2F2F7; --ios-card: #FFFFFF; --ios-text: #000000; --ios-text-secondary: #8E8E93; --ios-border: #C6C6C8; --ios-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif; background: var(--ios-bg); color: var(--ios-text); min-height: 100vh; padding-bottom: env(safe-area-inset-bottom); }
+        .header { background: linear-gradient(135deg, var(--ios-primary), var(--ios-secondary)); color: white; padding: 20px 16px; padding-top: max(20px, env(safe-area-inset-top)); position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 12px rgba(0,122,255,0.3); }
+        .header h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
+        .header p { opacity: 0.9; font-size: 14px; margin-top: 4px; }
+        .container { padding: 16px; max-width: 800px; margin: 0 auto; }
+        .card { background: var(--ios-card); border-radius: 16px; padding: 20px; margin-bottom: 16px; box-shadow: var(--ios-shadow); }
+        .card-title { font-size: 18px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        .card-title i { color: var(--ios-primary); }
+        .task-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        @media (max-width: 500px) { .task-grid { grid-template-columns: 1fr; } }
+        .task-item { background: var(--ios-bg); border-radius: 12px; padding: 16px; cursor: pointer; transition: all 0.2s ease; border: 2px solid transparent; }
+        .task-item:hover { background: #E8E8ED; }
+        .task-item.active { border-color: var(--ios-primary); background: rgba(0,122,255,0.08); }
+        .task-item i { font-size: 24px; color: var(--ios-primary); margin-bottom: 8px; }
+        .task-item span { display: block; font-size: 14px; font-weight: 500; }
+        .model-select { width: 100%; padding: 14px 16px; border: 1px solid var(--ios-border); border-radius: 12px; font-size: 16px; background: white; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238E8E93' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 16px center; cursor: pointer; }
+        .form-group { margin-bottom: 16px; }
+        .form-label { display: block; font-size: 14px; font-weight: 500; color: var(--ios-text-secondary); margin-bottom: 8px; }
+        .form-input { width: 100%; padding: 12px 16px; border: 1px solid var(--ios-border); border-radius: 10px; font-size: 16px; transition: border-color 0.2s; }
+        .form-input:focus { outline: none; border-color: var(--ios-primary); }
+        .config-section { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+        .config-section.expanded { max-height: 1000px; }
+        .config-toggle { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--ios-bg); border-radius: 10px; cursor: pointer; margin-top: 12px; }
+        .config-toggle span { font-size: 14px; font-weight: 500; }
+        .config-toggle i { transition: transform 0.3s; }
+        .config-toggle.open i { transform: rotate(180deg); }
+        .config-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding-top: 12px; }
+        @media (max-width: 500px) { .config-grid { grid-template-columns: 1fr; } }
+        .config-item { display: flex; flex-direction: column; gap: 6px; }
+        .config-item label { font-size: 13px; color: var(--ios-text-secondary); }
+        .config-item input, .config-item select { padding: 10px 12px; border: 1px solid var(--ios-border); border-radius: 8px; font-size: 14px; background: white; }
+        .file-upload { border: 2px dashed var(--ios-border); border-radius: 12px; padding: 30px 20px; text-align: center; cursor: pointer; transition: all 0.2s; }
+        .file-upload:hover { border-color: var(--ios-primary); background: rgba(0,122,255,0.04); }
+        .file-upload.dragover { border-color: var(--ios-primary); background: rgba(0,122,255,0.08); }
+        .file-upload i { font-size: 36px; color: var(--ios-text-secondary); margin-bottom: 12px; }
+        .file-upload p { font-size: 14px; color: var(--ios-text-secondary); }
+        .file-input { display: none; }
+        .file-name { margin-top: 12px; padding: 8px 12px; background: var(--ios-bg); border-radius: 8px; font-size: 13px; color: var(--ios-text); display: none; }
+        .file-name.show { display: block; }
+        .btn { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s; margin-top: 16px; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-primary { background: linear-gradient(135deg, var(--ios-primary), var(--ios-secondary)); color: white; }
+        .btn-primary:hover:not(:disabled) { transform: scale(1.01); box-shadow: 0 4px 12px rgba(0,122,255,0.3); }
+        .btn-secondary { background: var(--ios-bg); color: var(--ios-primary); }
+        .btn-download { background: var(--ios-success); color: white; }
+        .btn-download:hover:not(:disabled) { box-shadow: 0 4px 12px rgba(52,199,89,0.3); }
+        .result-card { display: none; }
+        .result-card.show { display: block; animation: slideUp 0.3s ease; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .result-info { display: flex; align-items: center; gap: 8px; padding: 12px; background: rgba(52,199,89,0.1); border-radius: 8px; margin-bottom: 16px; }
+        .result-info i { color: var(--ios-success); }
+        .result-audio { margin-bottom: 16px; }
+        .result-audio audio { width: 100%; height: 40px; }
+        .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; flex-direction: column; z-index: 1000; backdrop-filter: blur(4px); }
+        .loading-overlay.active { display: flex; }
+        .spinner { width: 48px; height: 48px; border: 4px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text { color: white; margin-top: 16px; font-size: 16px; }
+        .tab-nav { display: flex; background: var(--ios-card); border-radius: 12px; padding: 4px; margin-bottom: 16px; box-shadow: var(--ios-shadow); }
+        .tab-item { flex: 1; text-align: center; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+        .tab-item.active { background: var(--ios-primary); color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .path-selector { display: flex; gap: 8px; }
+        .path-selector input { flex: 1; }
+        .path-selector button { padding: 0 16px; background: var(--ios-bg); border: 1px solid var(--ios-border); border-radius: 10px; cursor: pointer; }
+        .model-status { display: flex; align-items: center; gap: 8px; padding: 12px; background: var(--ios-bg); border-radius: 8px; margin-bottom: 12px; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ios-text-secondary); }
+        .status-dot.loaded { background: var(--ios-success); }
+        .model-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+        .model-tag { padding: 6px 12px; background: rgba(52,199,89,0.1); color: var(--ios-success); border-radius: 20px; font-size: 13px; }
+        .empty-state { text-align: center; padding: 30px; color: var(--ios-text-secondary); }
+        .empty-state i { font-size: 36px; margin-bottom: 12px; }
+        .download-progress { display: none; margin-top: 16px; }
+        .download-progress.show { display: block; }
+        .progress-bar { height: 8px; background: var(--ios-bg); border-radius: 4px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; background: var(--ios-success); width: 0; transition: width 0.3s; }
+        .progress-text { font-size: 13px; color: var(--ios-text-secondary); margin-top: 8px; text-align: center; }
+        .setting-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--ios-bg); }
+        .switch { position: relative; width: 51px; height: 31px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #E9E9EA; transition: 0.3s; border-radius: 31px; }
+        .slider:before { position: absolute; content: ""; height: 27px; width: 27px; left: 2px; bottom: 2px; background-color: white; transition: 0.3s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        input:checked + .slider { background-color: var(--ios-success); }
+        input:checked + .slider:before { transform: translateX(20px); }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fas fa-wave-square"></i> ClearerVoice</h1>
+        <p>智能语音处理工具</p>
+    </div>
+    <div class="container">
+        <div class="tab-nav">
+            <div class="tab-item active" data-tab="process">音频处理</div>
+            <div class="tab-item" data-tab="settings">模型设置</div>
+        </div>
+        <div id="tab-process" class="tab-content active">
+            <div class="card">
+                <div class="card-title"><i class="fas fa-tasks"></i> 选择任务类型</div>
+                <div class="task-grid">
+                    <div class="task-item active" data-task="speech_enhancement"><i class="fas fa-volume-up"></i><span>语音增强</span></div>
+                    <div class="task-item" data-task="speech_separation"><i class="fas fa-users"></i><span>语音分离</span></div>
+                    <div class="task-item" data-task="speech_super_resolution"><i class="fas fa-expand"></i><span>语音超分辨率</span></div>
+                    <div class="task-item" data-task="target_speaker_extraction"><i class="fas fa-user-tie"></i><span>目标说话人提取</span></div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title"><i class="fas fa-brain"></i> 选择模型</div>
+                <select id="modelSelect" class="model-select"></select>
+            </div>
+            <div class="card">
+                <div class="card-title"><i class="fas fa-sliders-h"></i> 参数配置</div>
+                <div class="config-toggle" id="configToggle"><span><i class="fas fa-cog"></i> 展开高级参数</span><i class="fas fa-chevron-down"></i></div>
+                <div class="config-section" id="configSection"><div class="config-grid" id="configGrid"></div></div>
+            </div>
+            <div class="card">
+                <div class="card-title"><i class="fas fa-file-audio"></i> 上传音频</div>
+                <div class="file-upload" id="fileUpload"><i class="fas fa-cloud-upload-alt"></i><p>点击或拖拽音频文件到此处</p><p style="font-size: 12px; margin-top: 8px;">支持格式：WAV, MP3, FLAC, OGG, AAC, AIFF</p><div class="file-name" id="fileName"></div></div>
+                <input type="file" id="fileInput" class="file-input" accept="audio/*,.wav,.mp3,.flac,.ogg,.aac,.aiff">
+            </div>
+            <button class="btn btn-primary" id="processBtn" disabled><i class="fas fa-play"></i> 开始处理</button>
+            <div class="card result-card" id="resultCard">
+                <div class="card-title"><i class="fas fa-check-circle"></i> 处理完成</div>
+                <div class="result-info"><i class="fas fa-check-circle"></i><span>音频处理成功！</span></div>
+                <div class="result-audio"><audio id="resultAudio" controls>您的浏览器不支持音频播放</audio></div>
+                <button class="btn btn-secondary" id="downloadResultBtn"><i class="fas fa-download"></i> 下载处理后的音频</button>
+            </div>
+        </div>
+        <div id="tab-settings" class="tab-content">
+            <div class="card">
+                <div class="card-title"><i class="fas fa-folder"></i> 模型存储路径</div>
+                <div class="form-group">
+                    <label class="form-label">当前模型目录</label>
+                    <div class="path-selector"><input type="text" id="checkpointPath" class="form-input" readonly><button id="browseBtn"><i class="fas fa-folder-open"></i></button></div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title"><i class="fas fa-download"></i> 模型管理</div>
+                <div class="model-status"><div class="status-dot" id="statusDot"></div><span id="modelStatusText">检查中...</span></div>
+                <div class="model-list" id="installedList"></div>
+                <div class="empty-state" id="emptyState" style="display: none;"><i class="fas fa-box-open"></i><p>暂无已下载的模型</p></div>
+                <div id="downloadSection">
+                    <div class="form-group" style="margin-top: 16px;">
+                        <label class="form-label">从HuggingFace下载模型</label>
+                        <select id="downloadModelSelect" class="model-select">
+                            <option value="">-- 选择要下载的模型 --</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-download" id="downloadBtn2"><i class="fas fa-download"></i> 下载模型</button>
+                    <div class="download-progress" id="downloadProgress">
+                        <div class="progress-bar"><div class="progress-bar-fill" id="progressBar"></div></div>
+                        <div class="progress-text" id="progressText">下载中...</div>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title"><i class="fas fa-server"></i> 计算设备</div>
+                <div class="setting-row"><span>使用 GPU 加速</span><label class="switch"><input type="checkbox" id="useCuda" checked><span class="slider"></span></label></div>
+                <div class="setting-row"><span>设备信息</span><span id="deviceInfo" style="color: var(--ios-text-secondary); font-size: 14px;">自动检测</span></div>
+            </div>
+        </div>
+    </div>
+    <div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div><div class="loading-text">处理中，请稍候...</div></div>
+    <script>
+        const API_BASE = '';
+        let currentTask = 'speech_enhancement';
+        let currentModel = '';
+        let selectedFile = null;
+        let configData = {};
+        let allModels = [];
+        
+        async function loadTasks() {
+            const response = await fetch(API_BASE + '/api/tasks');
+            const tasks = await response.json();
+        }
+        
+        async function loadModels(task) {
+            const response = await fetch(API_BASE + '/api/models/' + task);
+            const models = await response.json();
+            const select = document.getElementById('modelSelect');
+            select.innerHTML = '';
+            models.forEach(model => {
+                const option = document.createElement('option');
+                option.value = model.name;
+                option.textContent = model.desc;
+                select.appendChild(option);
+            });
+            if (models.length > 0) {
+                currentModel = models[0].name;
+                loadConfig(currentModel);
+            }
+        }
+        
+        async function loadConfig(modelName) {
+            const response = await fetch(API_BASE + '/api/config/' + modelName);
+            const config = await response.json();
+            configData = config;
+            renderConfig(modelName, config);
+        }
+        
+        function renderConfig(modelName, config) {
+            const grid = document.getElementById('configGrid');
+            grid.innerHTML = '';
+            const configItems = [];
+            
+            if (modelName.includes('SE_48K') || modelName.includes('SE_16K')) {
+                configItems.push({ key: 'one_time_decode_length', label: '单次解码最大长度(秒)', type: 'number', default: config.one_time_decode_length || 20 });
+                configItems.push({ key: 'decode_window', label: '解码窗口大小', type: 'number', default: config.decode_window || 4 });
+                configItems.push({ key: 'win_type', label: '窗口类型', type: 'select', options: ['hamming', 'hanning'], default: config.win_type || 'hamming' });
+                configItems.push({ key: 'win_len', label: '窗口长度', type: 'number', default: config.win_len || 1920 });
+                configItems.push({ key: 'win_inc', label: '窗口步长', type: 'number', default: config.win_inc || 384 });
+                configItems.push({ key: 'fft_len', label: 'FFT长度', type: 'number', default: config.fft_len || 1920 });
+                configItems.push({ key: 'num_mels', label: '梅尔 bins 数量', type: 'number', default: config.num_mels || 60 });
+            } else if (modelName.includes('SS_16K')) {
+                configItems.push({ key: 'one_time_decode_length', label: '单次解码最大长度(秒)', type: 'number', default: config.one_time_decode_length || 2 });
+                configItems.push({ key: 'decode_window', label: '解码窗口大小', type: 'number', default: config.decode_window || 2 });
+                configItems.push({ key: 'num_spks', label: '说话人数量', type: 'number', default: config.num_spks || 2 });
+                configItems.push({ key: 'encoder_kernel_size', label: '编码器卷积核大小', type: 'number', default: config.encoder_kernel_size || 16 });
+                configItems.push({ key: 'encoder_embedding_dim', label: '编码器嵌入维度', type: 'number', default: config.encoder_embedding_dim || 512 });
+                configItems.push({ key: 'mossformer_sequence_dim', label: 'MossFormer 序列维度', type: 'number', default: config.mossformer_sequence_dim || 512 });
+                configItems.push({ key: 'num_mossformer_layer', label: 'MossFormer 层数', type: 'number', default: config.num_mossformer_layer || 24 });
+            } else if (modelName.includes('SR_48K')) {
+                configItems.push({ key: 'one_time_decode_length', label: '单次解码最大长度(秒)', type: 'number', default: config.one_time_decode_length || 20 });
+                configItems.push({ key: 'decode_window', label: '解码窗口大小', type: 'number', default: config.decode_window || 4 });
+            } else if (modelName.includes('TSE_16K')) {
+                configItems.push({ key: 'one_time_decode_length', label: '单次解码最大长度(秒)', type: 'number', default: config.one_time_decode_length || 3 });
+                configItems.push({ key: 'decode_window', label: '解码窗口大小', type: 'number', default: config.decode_window || 3 });
+                configItems.push({ key: 'network_reference_cue', label: '参考信号类型', type: 'select', options: ['lip', 'audio'], default: config.network_reference_cue || 'lip' });
+                configItems.push({ key: 'network_reference_backbone', label: '参考网络骨干', type: 'select', options: ['resnet18', 'resnet34'], default: config.network_reference_backbone || 'resnet18' });
+                configItems.push({ key: 'network_reference_emb_size', label: '参考网络嵌入大小', type: 'number', default: config.network_reference_emb_size || 256 });
+                configItems.push({ key: 'network_audio_masknet_numspks', label: '掩码网络说话人数', type: 'number', default: config.network_audio_masknet_numspks || 1 });
+                configItems.push({ key: 'network_audio_masknet_chunksize', label: '掩码网络块大小', type: 'number', default: config.network_audio_masknet_chunksize || 250 });
+                configItems.push({ key: 'network_audio_intra_numlayers', label: '内部层数', type: 'number', default: config.network_audio_intra_numlayers || 24 });
+                configItems.push({ key: 'network_audio_intra_nhead', label: '注意力头数', type: 'number', default: config.network_audio_intra_nhead || 8 });
+                configItems.push({ key: 'network_audio_intra_dffn', label: '前馈网络维度', type: 'number', default: config.network_audio_intra_dffn || 1024 });
+            }
+            
+            configItems.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'config-item';
+                let input;
+                if (item.type === 'select') {
+                    input = '<select id="config_' + item.key + '">' + item.options.map(opt => '<option value="' + opt + '"' + (opt === item.default ? ' selected' : '') + '>' + opt + '</option>').join('') + '</select>';
+                } else {
+                    input = '<input type="' + item.type + '" id="config_' + item.key + '" value="' + item.default + '" step="any">';
+                }
+                div.innerHTML = '<label>' + item.label + '</label>' + input;
+                grid.appendChild(div);
+            });
+            
+            if (configItems.length === 0) {
+                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: var(--ios-text-secondary);">此模型无需额外配置</div>';
+            }
+        }
+        
+        function collectConfig() {
+            const config = {};
+            const inputs = document.querySelectorAll('#configGrid input, #configGrid select');
+            inputs.forEach(input => {
+                const key = input.id.replace('config_', '');
+                config[key] = input.type === 'number' ? parseFloat(input.value) : input.value;
+            });
+            return config;
+        }
+        
+        async function loadModelInfo() {
+            const response = await fetch(API_BASE + '/api/model_info');
+            const info = await response.json();
+            allModels = info.available || [];
+            document.getElementById('checkpointPath').value = info.checkpoint_dir;
+            
+            const downloadSelect = document.getElementById('downloadModelSelect');
+            downloadSelect.innerHTML = '<option value="">-- 选择要下载的模型 --</option>';
+            allModels.forEach(model => {
+                const option = document.createElement('option');
+                option.value = model;
+                option.textContent = model;
+                downloadSelect.appendChild(option);
+            });
+            
+            const statusDot = document.getElementById('statusDot');
+            const statusText = document.getElementById('modelStatusText');
+            const installedList = document.getElementById('installedList');
+            const emptyState = document.getElementById('emptyState');
+            
+            if (info.installed && info.installed.length > 0) {
+                statusDot.classList.add('loaded');
+                statusText.textContent = '已安装 ' + info.installed.length + ' 个模型';
+                installedList.innerHTML = info.installed.map(model => '<span class="model-tag"><i class="fas fa-check"></i> ' + model + '</span>').join('');
+                emptyState.style.display = 'none';
+                installedList.style.display = 'flex';
+            } else {
+                statusText.textContent = '暂无已安装模型';
+                installedList.style.display = 'none';
+                emptyState.style.display = 'block';
+            }
+            
+            document.getElementById('deviceInfo').textContent = '自动检测';
+        }
+        
+        async function downloadModel() {
+            const modelName = document.getElementById('downloadModelSelect').value;
+            if (!modelName) { alert('请选择要下载的模型'); return; }
+            
+            const progressDiv = document.getElementById('downloadProgress');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const downloadBtn = document.getElementById('downloadBtn2');
+            
+            progressDiv.classList.add('show');
+            downloadBtn.disabled = true;
+            progressText.textContent = '正在下载模型，请稍候...';
+            progressBar.style.width = '30%';
+            
+            try {
+                const response = await fetch(API_BASE + '/api/download_model', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ model_name: modelName })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    progressBar.style.width = '100%';
+                    progressText.textContent = '下载完成！';
+                    alert('模型下载成功！');
+                    loadModelInfo();
+                } else {
+                    progressText.textContent = '下载失败: ' + result.error;
+                    alert('下载失败: ' + result.error);
+                }
+            } catch (error) {
+                progressText.textContent = '请求失败: ' + error.message;
+                alert('请求失败: ' + error.message);
+            } finally {
+                downloadBtn.disabled = false;
+                setTimeout(() => { progressDiv.classList.remove('show'); }, 3000);
+            }
+        }
+        
+        document.querySelectorAll('.task-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.task-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+                currentTask = this.dataset.task;
+                loadModels(currentTask);
+            });
+        });
+        
+        document.getElementById('modelSelect').addEventListener('change', function() {
+            currentModel = this.value;
+            loadConfig(currentModel);
+        });
+        
+        document.getElementById('configToggle').addEventListener('click', function() {
+            this.classList.toggle('open');
+            document.getElementById('configSection').classList.toggle('expanded');
+        });
+        
+        document.querySelectorAll('.tab-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.tab-item').forEach(i => i.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                this.classList.add('active');
+                document.getElementById('tab-' + this.dataset.tab).classList.add('active');
+                if (this.dataset.tab === 'settings') { loadModelInfo(); }
+            });
+        });
+        
+        const fileUpload = document.getElementById('fileUpload');
+        const fileInput = document.getElementById('fileInput');
+        const fileName = document.getElementById('fileName');
+        const processBtn = document.getElementById('processBtn');
+        
+        fileUpload.addEventListener('click', () => fileInput.click());
+        
+        fileInput.addEventListener('change', function(e) {
+            if (this.files.length > 0) {
+                selectedFile = this.files[0];
+                fileName.textContent = selectedFile.name;
+                fileName.classList.add('show');
+                processBtn.disabled = false;
+            }
+        });
+        
+        fileUpload.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileUpload.classList.add('dragover');
+        });
+        
+        fileUpload.addEventListener('dragleave', () => {
+            fileUpload.classList.remove('dragover');
+        });
+        
+        fileUpload.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileUpload.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) {
+                selectedFile = e.dataTransfer.files[0];
+                fileName.textContent = selectedFile.name;
+                fileName.classList.add('show');
+                processBtn.disabled = false;
+            }
+        });
+        
+        processBtn.addEventListener('click', async function() {
+            if (!selectedFile) { alert('请先上传音频文件'); return; }
+            
+            const config = collectConfig();
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            formData.append('task', currentTask);
+            formData.append('model_name', currentModel);
+            formData.append('config', JSON.stringify(config));
+            
+            document.getElementById('loadingOverlay').classList.add('active');
+            
+            try {
+                const response = await fetch(API_BASE + '/api/process', { method: 'POST', body: formData });
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('resultCard').classList.add('show');
+                    document.getElementById('resultAudio').src = result.output_file;
+                    document.getElementById('downloadResultBtn').onclick = () => { window.location.href = result.output_file; };
+                } else {
+                    alert('处理失败: ' + result.error);
+                }
+            } catch (error) {
+                alert('请求失败: ' + error.message);
+            } finally {
+                document.getElementById('loadingOverlay').classList.remove('active');
+            }
+        });
+        
+        document.getElementById('downloadBtn2').addEventListener('click', downloadModel);
+        
+        const pathInput = document.getElementById('checkpointPath');
+        
+        pathInput.addEventListener('dblclick', function() {
+            this.removeAttribute('readonly');
+        });
+        
+        pathInput.addEventListener('blur', async function() {
+            this.setAttribute('readonly', true);
+            const newPath = this.value.trim();
+            if (newPath) {
+                try {
+                    const response = await fetch(API_BASE + '/api/checkpoint_dir', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ path: newPath })
+                    });
+                    const result = await response.json();
+                    if (!result.success) {
+                        alert('路径无效: ' + result.error);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                }
+            }
+        });
+        
+        pathInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                this.blur();
+            }
+        });
+        
+        document.getElementById('browseBtn').addEventListener('click', function() {
+            const userInput = prompt('请输入模型存储路径:\n(例如: D:\\models 或 C:/Users/username/models)');
+            if (userInput) {
+                pathInput.value = userInput;
+                pathInput.blur();
+            }
+        });
+        
+        loadTasks();
+        loadModels(currentTask);
+    </script>
+</body>
+</html>

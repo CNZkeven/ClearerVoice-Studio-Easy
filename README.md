@@ -1,105 +1,205 @@
-<div align="center">
-<img src="https://github.com/user-attachments/assets/a4ccbc60-5248-4dca-8cec-09a6385c6d0f" width="768" height="192">
-</div>
+# ClearerVoice-Studio-Easy
 
-<strong>ClearerVoice-Studio</strong> is an open-source, AI-powered speech processing toolkit designed for researchers, developers, and end-users. It provides capabilities of speech enhancement, speech separation, speech super-resolution, target speaker extraction, and more. The toolkit provides state-of-the-art pre-trained models, along with training and inference scripts, all accessible from this repository.
- 
-#### 👉🏻[HuggingFace Demo](https://huggingface.co/spaces/alibabasglab/ClearVoice)👈🏻  | 👉🏻[ModelScope Demo](https://modelscope.cn/studios/iic/ClearerVoice-Studio) ｜ 👉🏻[SpeechScore Demo](https://huggingface.co/spaces/alibabasglab/SpeechScore)👈🏻 ｜ 👉🏻[Paper](https://arxiv.org/abs/2506.19398)👈🏻 
+ClearerVoice-Studio-Easy 是一个基于深度学习的语音处理工具集，提供多种语音增强、语音分离、目标说话人提取和语音超分辨率功能。本项目是 [ClearerVoice-Studio](https://github.com/modelscope/ClearerVoice-Studio) 的简化版本，专注于核心推理功能。
 
----
-![GitHub Repo stars](https://img.shields.io/github/stars/modelscope/ClearerVoice-Studio) Please leave your ⭐ on our GitHub to support this community project！
+## 功能特性
 
-记得点击右上角的星星⭐来支持我们一下，您的支持是我们更新模型的最大动力！
+### 支持的任务
 
-## News :fire:
-- Upcoming: More tasks will be added to ClearVoice.
-- [2025.6] Add an interface for [ClearVoice](https://github.com/modelscope/ClearerVoice-Studio/tree/main/clearvoice) that allows passing a Numpy array into the model and receiving its output as a NumPy array. It allows a more flexible call of the models during a training or inference pipeline. Please check out [`demo_Numpy2Numpy.py`](https://github.com/modelscope/ClearerVoice-Studio/blob/main/clearvoice/demo_Numpy2Numpy.py).
-- [2025.5] Updated speechscore with more non-intrusive metrics: NISQA and DISTILL_MOS
-- [2025.4] Updated pip installation for [ClearVoice](https://github.com/modelscope/ClearerVoice-Studio/tree/main/clearvoice). Now you can simply type `pip install clearvoice` to use all the pretrained models in ClearVoice, see project description in PyPi [link](https://pypi.org/project/clearvoice/).
-- [2025.4] Added a training script for speech super-resolution, supporting both retraining and fine-tuning of models. For details, refer to the documentation [here](https://github.com/modelscope/ClearerVoice-Studio/tree/main/train/speech_super_resolution).
-- [2025.4] Added data generation scripts for training/finetuning speech enhancement models. The scripts generate either noisy speech or noisy-reverberant speech. Please check [here](https://github.com/modelscope/ClearerVoice-Studio/tree/main/train/data_generation/speech_enhancement).
-- [2025.1] ClearVoice demo is ready for try on both [HuggingFace](https://huggingface.co/spaces/alibabasglab/ClearVoice) and [ModelScope](https://modelscope.cn/studios/iic/ClearerVoice-Studio). However, HuggingFace has limited GPU usage, and ModelScope has more GPU usage quota.
-- [2025.1] ClearVoice now offers **speech super-resolution**, also known as bandwidth extension. This feature improves the perceptual quality of speech by converting low-resolution audio (with an effective sampling rate of at least 16,000 Hz) into high-resolution audio with a sampling rate of 48,000 Hz. A full upscaled **LJSpeech-1.1-48kHz dataset** can be downloaded from [HuggingFace](https://huggingface.co/datasets/alibabasglab/LJSpeech-1.1-48kHz) and [ModelScope](https://modelscope.cn/datasets/iic/LJSpeech-1.1-48kHz).
-- [2025.1] ClearVoice now supports more audio formats including **"wav", "aac", "ac3", "aiff", "flac", "m4a", "mp3", "ogg", "opus", "wma", "webm"**, etc. It also supports both mono and stereo channels with 16-bit or 32-bit precisions. A latest version of [ffmpeg](https://github.com/FFmpeg/FFmpeg) is required for audio codecs.  
-- [2024.12] Upload pre-trained models on ModelScope. User now can download the models from either [ModelScope](https://www.modelscope.cn/models/iic/ClearerVoice-Studio/summary) or [Huggingface](https://huggingface.co/alibabasglab)  
-- [2024.11] Our FRCRN speech denoiser has been used over **3.0 million** times on [ModelScope](https://modelscope.cn/models/iic/speech_frcrn_ans_cirm_16k)
-- [2024.11] Our MossFormer speech separator has been used over **2.5 million** times on [ModelScope](https://modelscope.cn/models/iic/speech_mossformer_separation_temporal_8k)
-- [2024.11] Release of this repository
+1. **语音增强 (Speech Enhancement)**
+   - `MossFormer2_SE_48K` - 48kHz 语音增强模型
+   - `FRCRN_SE_16K` - 16kHz 语音增强模型
+   - `MossFormerGAN_SE_16K` - 16kHz GAN 语音增强模型
 
-### 🌟 Why Choose ClearerVoice-Studio?
+2. **语音分离 (Speech Separation)**
+   - `MossFormer2_SS_16K` - 16kHz 语音分离模型（支持 2 人分离）
 
-- **Pre-Trained Models:** Includes cutting-edge pre-trained models, fine-tuned on extensive, high-quality datasets. No need to start from scratch!
-- **Ease of Use:** Designed for seamless integration with your projects, offering a simple yet flexible interface for inference and training.
-- **Comprehensive Features:** Combines advanced algorithms for multiple speech processing tasks in one platform.
-- **Community-Driven:** Built for researchers, developers, and enthusiasts to collaborate and innovate together.
+3. **语音超分辨率 (Speech Super-Resolution)**
+   - `MossFormer2_SR_48K` - 8kHz 到 48kHz 语音超分辨率
 
-## Contents of this repository
-This repository is organized into three main components: **[ClearVoice](https://github.com/modelscope/ClearerVoice-Studio/tree/main/clearvoice)**, **[Train](https://github.com/modelscope/ClearerVoice-Studio/tree/main/train)**, and **[SpeechScore](https://github.com/modelscope/ClearerVoice-Studio/tree/main/speechscore)**.
+4. **目标说话人提取 (Target Speaker Extraction)**
+   - `AV_MossFormer2_TSE_16K` - 音视频双模态目标说话人提取
 
-### 1. **ClearVoice [[Readme](https://github.com/modelscope/ClearerVoice-Studio/blob/main/clearvoice/README.md)][[文档](https://github.com/modelscope/ClearerVoice-Studio/blob/main/clearvoice/README.md)]**  
-ClearVoice offers a user-friendly  solution for speech processing tasks such as speech denoising, separation, super-resolution, audio-visual target speaker extraction, and more. It is designed as a unified inference platform leveraged pre-trained models (e.g., [FRCRN](https://arxiv.org/abs/2206.07293), [MossFormer](https://arxiv.org/abs/2302.11824)), all trained on extensive datasets. If you're looking for a tool to improve speech quality, ClearVoice is the perfect choice. Simply click on [`ClearVoice`](https://github.com/modelscope/ClearerVoice-Studio/tree/main/clearvoice) and follow our detailed instructions to get started.
+## 环境要求
 
-### 2. **Train**  
-For advanced researchers and developers, we provide model finetune and training scripts for all the tasks offerred in ClearVoice and more:
+- Python >= 3.8
+- PyTorch >= 2.0.0
+- CUDA (可选，用于 GPU 加速)
 
-- **Task 1: [Speech enhancement](train/speech_enhancement)** (16kHz & 48kHz)
-- **Task 2: [Speech separation](train/speech_separation)** (8kHz & 16kHz)
-- **Task 2: [Speech super-resolution](https://github.com/modelscope/ClearerVoice-Studio/tree/main/train/speech_super_resolution)** (48kHz) 
-- **Task 4: [Target speaker extraction](train/target_speaker_extraction)** 
-  - **Sub-Task 1: Audio-only Speaker Extraction Conditioned on a Reference Speech** (8kHz)
-  - **Sub-Task 2: Audio-visual Speaker Extraction Conditioned on Face (Lip) Recording** (16kHz)
-  - **Sub-Task 3: Audio-visual Speaker Extraction Conditioned on Body Gestures** (16kHz)
-  - **Sub-Task 4: Neuro-steered Speaker Extraction Conditioned on EEG Signals** (16kHz)
+## 安装步骤
 
-Contributors are welcomed to include more model architectures and tasks!
+### 方法一：使用 Conda（推荐）
 
-### 3. **SpeechScore [[Readme](https://github.com/modelscope/ClearerVoice-Studio/blob/main/speechscore/README.md)][[文档](https://github.com/modelscope/ClearerVoice-Studio/blob/main/speechscore/README.md)]**  
-<a href="https://github.com/modelscope/ClearerVoice-Studio/tree/main/speechscore">`SpeechScore`<a/> is a speech quality assessment toolkit. We include it here to evaluate different model performance. SpeechScore includes many popular speech metrics:
+```bash
+# 克隆仓库
+git clone https://github.com/your-repo/ClearerVoice-Studio-Easy.git
+cd ClearerVoice-Studio-Easy
 
-- Signal-to-Noise Ratio (SNR)
-- Perceptual Evaluation of Speech Quality (PESQ)
-- Short-Time Objective Intelligibility (STOI)
-- Deep Noise Suppression Mean Opinion Score (DNSMOS)
-- Scale-Invariant Signal-to-Distortion Ratio (SI-SDR)
-- and many more quality benchmarks  
-  
-## Contact
-If you have any comments or questions about ClearerVoice-Studio, feel free to raise an issue in this repository or contact us directly at:
-- email: {shengkui.zhao, zexu.pan}@alibaba-inc.com
+# 创建并激活 conda 环境
+conda create -n clearvoice python=3.8
+conda activate clearvoice
 
-Alternatively, welcome to join our DingTalk group to share and discuss algorithms, technology, and user experience feedback. You may scan the following QR codes to join our official chat group. 
+# 安装依赖
+pip install -r requirements.txt
+```
 
-<p align="center">
-  <table>
-    <tr>
-      <td style="text-align:center;">
-        <a href="./asset/QR.jpg"><img alt="ClearVoice in DingTalk" src="https://img.shields.io/badge/ClearVoice-DingTalk-d9d9d9"></a>
-      </td>
-    </tr>
-    <tr>
-       <td style="text-align:center;">
-      <img alt="Light" src="./asset/dingtalk.png" width="68%" />
-      </td>
-    </tr>
-  </table>
-</p>
- 
-## Friend Links
-Checkout some awesome Github repositories from Speech Lab of Institute for Intelligent Computing, Alibaba Group.
+### 方法二：使用现有 Conda 环境
 
-<p align="center">
-<a href="https://github.com/FunAudioLLM/InspireMusic" target="_blank">
-        <img alt="Demo" src="https://img.shields.io/badge/Repo | Space-InspireMusic?labelColor=&label=InspireMusic&color=green"></a>
-<a href="https://github.com/modelscope/FunASR" target="_blank">
-        <img alt="Github" src="https://img.shields.io/badge/Repo | Space-FunASR?labelColor=&label=FunASR&color=green"></a>
-<a href="https://github.com/FunAudioLLM" target="_blank">
-        <img alt="Demo" src="https://img.shields.io/badge/Repo | Space-FunAudioLLM?labelColor=&label=FunAudioLLM&color=green"></a>
-<a href="https://github.com/modelscope/3D-Speaker" target="_blank">
-        <img alt="Demo" src="https://img.shields.io/badge/Repo | Space-3DSpeaker?labelColor=&label=3D-Speaker&color=green"></a>
-</p>
+```bash
+# 激活现有环境
+conda activate Common
 
+# 安装依赖
+pip install -r requirements.txt
+```
 
-## Acknowledge
-ClearerVoice-Studio contains third-party components and code modified from some open-source repos, including: <br>
-[Speechbrain](https://github.com/speechbrain/speechbrain), [ESPnet](https://github.com/espnet), [TalkNet-ASD
-](https://github.com/TaoRuijie/TalkNet-ASD)
+## 使用方法
+
+### 1. 命令行测试
+
+运行测试脚本验证模型加载：
+
+```bash
+python test_model.py
+```
+
+### 2. Python API 使用
+
+#### 语音增强示例
+
+```python
+from clearvoice import ClearVoice
+
+# 加载语音增强模型
+myClearVoice = ClearVoice(task='speech_enhancement', model_names=['MossFormer2_SE_48K'])
+
+# 处理单个音频文件
+output_wav = myClearVoice(input_path='samples/input.wav', online_write=False)
+myClearVoice.write(output_wav, output_path='samples/output.wav')
+
+# 批量处理音频文件
+myClearVoice(input_path='samples/input_folder/', online_write=True, output_path='samples/output_folder/')
+```
+
+#### 语音分离示例
+
+```python
+from clearvoice import ClearVoice
+
+# 加载语音分离模型
+myClearVoice = ClearVoice(task='speech_separation', model_names=['MossFormer2_SS_16K'])
+
+# 处理混合音频
+output_wav = myClearVoice(input_path='samples/mixed.wav', online_write=False)
+myClearVoice.write(output_wav, output_path='samples/separated/')
+```
+
+#### 语音超分辨率示例
+
+```python
+from clearvoice import ClearVoice
+
+# 加载语音超分辨率模型
+myClearVoice = ClearVoice(task='speech_super_resolution', model_names=['MossFormer2_SR_48K'])
+
+# 处理低分辨率音频
+output_wav = myClearVoice(input_path='samples/low_res.wav', online_write=False)
+myClearVoice.write(output_wav, output_path='samples/high_res.wav')
+```
+
+### 3. Web 界面
+
+启动 Flask Web 服务器：
+
+```bash
+cd clearvoice
+python app.py
+```
+
+访问 `http://localhost:5000` 使用 Web 界面上传音频文件并进行处理。
+
+## 模型下载
+
+模型权重文件会自动从 HuggingFace 下载，存储位置：
+- Windows: `checkpoints/模型名称/`
+- Linux/Mac: `checkpoints/模型名称/`
+
+手动下载模型：
+
+```python
+from huggingface_hub import snapshot_download
+
+# 下载特定模型
+snapshot_download(
+    repo_id="alibabasglab/MossFormer2_SE_48K",
+    local_dir="checkpoints/MossFormer2_SE_48K"
+)
+```
+
+## 项目结构
+
+```
+ClearerVoice-Studio-Easy/
+├── clearvoice/
+│   ├── __init__.py          # ClearVoice 主类
+│   ├── network_wrapper.py   # 网络模型加载器
+│   ├── networks.py          # 模型定义
+│   ├── models/              # 模型实现
+│   │   ├── mossformer2_se/  # 语音增强模型
+│   │   ├── mossformer2_ss/  # 语音分离模型
+│   │   ├── mossformer2_sr/  # 语音超分辨率模型
+│   │   ├── frcrn_se/        # FRCRN 语音增强模型
+│   │   └── av_mossformer2_tse/ # 音视频目标说话人提取模型
+│   ├── dataloader/          # 数据加载器
+│   ├── utils/               # 工具函数
+│   ├── config/              # 配置文件
+│   │   └── inference/       # 推理配置
+│   ├── app.py               # Flask Web 应用
+│   └── streamlit_app.py     # Streamlit Web 应用
+├── checkpoints/             # 模型权重文件
+├── test_model.py            # 测试脚本
+├── requirements.txt         # 依赖包列表
+└── README.md                # 项目文档
+```
+
+## 配置说明
+
+各模型的推理参数配置位于 `clearvoice/config/inference/` 目录下，包含：
+- 采样率设置
+- 窗口长度和偏移
+- FFT 参数
+- 解码窗口大小
+
+## 常见问题
+
+### 模型下载失败
+
+如果遇到模型下载失败，可以：
+1. 检查网络连接
+2. 使用镜像源：`pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt`
+3. 手动从 HuggingFace 下载模型文件
+
+### GPU 内存不足
+
+如果遇到 GPU 内存不足：
+1. 减小 `one_time_decode_length` 参数值
+2. 使用 CPU 模式：设置 `use_cuda=0`
+
+### 音频采样率不匹配
+
+确保输入音频的采样率与模型要求的采样率一致：
+- 48K 模型：需要 48000Hz 音频
+- 16K 模型：需要 16000Hz 音频
+
+## 许可证
+
+本项目采用 Apache License 2.0 许可证。
+
+## 致谢
+
+- 原始项目：[ClearerVoice-Studio](https://github.com/modelscope/ClearerVoice-Studio)
+- 模型来自阿里巴巴达摩院
+
+## 联系方式
+
+如有问题或建议，请在 GitHub Issues 中提交。
