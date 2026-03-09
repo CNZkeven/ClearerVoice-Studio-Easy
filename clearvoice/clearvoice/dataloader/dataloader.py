@@ -15,6 +15,13 @@ from pydub import AudioSegment
 from .misc import read_and_config_file, get_file_extension
 import librosa
 import random
+
+try:
+    from clearvoice_native import audio_norm as _rust_audio_norm
+    _USE_RUST_NORM = True
+except ImportError:
+    _USE_RUST_NORM = False
+
 EPS = 1e-6
 MAX_WAV_VALUE_16B = 32768.0
 MAX_WAV_VALUE_32B = 2147483648.0
@@ -142,6 +149,13 @@ def audio_norm(x):
     numpy.ndarray: Normalized audio signal.
     """
     
+    if _USE_RUST_NORM:
+        try:
+            result, scalar = _rust_audio_norm(np.asarray(x, dtype=np.float64))
+            return np.asarray(result, dtype=x.dtype), scalar
+        except Exception:
+            pass
+
     # Compute the root mean square (RMS) of the input audio signal.
     rms = (x ** 2).mean() ** 0.5
     
@@ -284,9 +298,11 @@ class Wave_Processor(object):
                either padded to the segment length or trimmed.
         """
         # Read the input and label audio files using the target sampling rate.
-        wave_inputs = audioread(path['inputs'], sampling_rate)
-        wave_labels = audioread(path['labels'], sampling_rate)
-        
+        wave_inputs_list, _, _ = audioread(path['inputs'], sampling_rate, use_norm=False)
+        wave_labels_list, _, _ = audioread(path['labels'], sampling_rate, use_norm=False)
+        wave_inputs = wave_inputs_list[0]
+        wave_labels = wave_labels_list[0]
+
         # Get the length of the label audio (assumed both inputs and labels have similar lengths).
         len_wav = wave_labels.shape[0]
         

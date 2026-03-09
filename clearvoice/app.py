@@ -64,9 +64,21 @@ class ModelManager:
                 return False, "Model load failed"
 
         try:
-            # Use process method instead of calling model directly
             output_wav = self.current_model.process(input_path, online_write=False)
-            self.current_model.write_audio(output_path, audio=output_wav)
+            if output_wav is None:
+                return False, "Processing returned no output"
+            # Use soundfile directly since write_audio requires internal state
+            import soundfile as sf
+            import numpy as np
+            sampling_rate = self.current_model.args.sampling_rate
+            if isinstance(output_wav, np.ndarray):
+                if output_wav.ndim > 1:
+                    audio_data = output_wav[0, :]
+                else:
+                    audio_data = output_wav
+            else:
+                audio_data = output_wav
+            sf.write(output_path, audio_data, sampling_rate)
             return True, output_path
         except Exception as e:
             return False, str(e)
@@ -261,7 +273,7 @@ def process_audio():
 
     try:
         config = json.loads(config_str)
-    except:
+    except Exception:
         config = {}
 
     model_manager.set_config(task, model_name, config)
@@ -276,7 +288,7 @@ def process_audio():
 
     try:
         os.remove(input_path)
-    except:
+    except OSError:
         pass
 
     if success:
@@ -284,7 +296,7 @@ def process_audio():
         def remove_output_file(response):
             try:
                 threading.Timer(300, lambda: os.remove(output_path) if os.path.exists(output_path) else None).start()
-            except:
+            except OSError:
                 pass
             return response
         return jsonify({

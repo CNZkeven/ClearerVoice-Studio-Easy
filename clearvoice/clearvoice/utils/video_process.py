@@ -20,6 +20,15 @@ from ..models.av_mossformer2_tse.faceDetector.s3fd import S3FD
 from .decode import decode_one_audio_AV_MossFormer2_TSE_16K
 
 
+def _run_ffmpeg(*args):
+    subprocess.run(
+        ['ffmpeg', '-y', *[str(arg) for arg in args]],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=True,
+    )
+
+
 
 def process_tse(args, model, device, data_reader, output_wave_dir):
 	video_args = args_param()
@@ -70,25 +79,19 @@ def main(video_args, args):
     video_args.videoFilePath = os.path.join(video_args.pyaviPath, 'video.avi')
     # If duration did not set, extract the whole video, otherwise extract the video from 'video_args.start' to 'video_args.start + video_args.duration'
     if video_args.duration == 0:
-        command = ("ffmpeg -y -i %s -qscale:v 2 -threads %d -async 1 -r 25 %s -loglevel panic" % \
-            (video_args.videoPath, video_args.nDataLoaderThread, video_args.videoFilePath))
+        ffmpeg_args = ['-i', video_args.videoPath, '-qscale:v', '2', '-threads', str(video_args.nDataLoaderThread), '-async', '1', '-r', '25', video_args.videoFilePath]
     else:
-        command = ("ffmpeg -y -i %s -qscale:v 2 -threads %d -ss %.3f -to %.3f -async 1 -r 25 %s -loglevel panic" % \
-            (video_args.videoPath, video_args.nDataLoaderThread, video_args.start, video_args.start + video_args.duration, video_args.videoFilePath))
-    subprocess.call(command, shell=True, stdout=None)
+        ffmpeg_args = ['-i', video_args.videoPath, '-qscale:v', '2', '-threads', str(video_args.nDataLoaderThread), '-ss', f'{video_args.start:.3f}', '-to', f'{video_args.start + video_args.duration:.3f}', '-async', '1', '-r', '25', video_args.videoFilePath]
+    _run_ffmpeg(*ffmpeg_args)
     sys.stderr.write(time.strftime("%Y-%m-%d %H:%M:%S") + " Extract the video and save in %s \r\n" %(video_args.videoFilePath))
 
     # Extract audio
     video_args.audioFilePath = os.path.join(video_args.pyaviPath, 'audio.wav')
-    command = ("ffmpeg -y -i %s -qscale:a 0 -ac 1 -vn -threads %d -ar 16000 %s -loglevel panic" % \
-        (video_args.videoFilePath, video_args.nDataLoaderThread, video_args.audioFilePath))
-    subprocess.call(command, shell=True, stdout=None)
+    _run_ffmpeg('-i', video_args.videoFilePath, '-qscale:a', '0', '-ac', '1', '-vn', '-threads', str(video_args.nDataLoaderThread), '-ar', '16000', video_args.audioFilePath)
     sys.stderr.write(time.strftime("%Y-%m-%d %H:%M:%S") + " Extract the audio and save in %s \r\n" %(video_args.audioFilePath))
 
     # Extract the video frames
-    command = ("ffmpeg -y -i %s -qscale:v 2 -threads %d -f image2 %s -loglevel panic" % \
-        (video_args.videoFilePath, video_args.nDataLoaderThread, os.path.join(video_args.pyframesPath, '%06d.jpg'))) 
-    subprocess.call(command, shell=True, stdout=None)
+    _run_ffmpeg('-i', video_args.videoFilePath, '-qscale:v', '2', '-threads', str(video_args.nDataLoaderThread), '-f', 'image2', os.path.join(video_args.pyframesPath, '%06d.jpg'))
     sys.stderr.write(time.strftime("%Y-%m-%d %H:%M:%S") + " Extract the frames and save in %s \r\n" %(video_args.pyframesPath))
 
     # Scene detection for the video frames
@@ -128,14 +131,24 @@ def main(video_args, args):
     # combine files in pycrop
     for idx, file in enumerate(files):
         print(file)
-        command = f"ffmpeg -i {file} {file[:-9]}orig_{idx}.mp4 ;"
-        command += f"rm {file} ;"
-        command += f"rm {file.replace('.avi', '.wav')} ;"
+        orig_mp4 = file[:-9] + f'orig_{idx}.mp4'
+        est_wav = file.replace('.avi', '.wav')
+        est_mp4 = file[:-9] + f'est_{idx}.mp4'
 
-        command += f"ffmpeg -i {file[:-9]}orig_{idx}.mp4 -i {file[:-9]}est_{idx}.wav -c:v copy -map 0:v:0 -map 1:a:0 -shortest {file[:-9]}est_{idx}.mp4 ;"
-        # command += f"rm {file[:-9]}est_{idx}.wav ;"
+        _run_ffmpeg('-i', file, orig_mp4)
+        if os.path.exists(file):
+            os.remove(file)
+        if os.path.exists(est_wav):
+            os.remove(est_wav)
 
-        output = subprocess.call(command, shell=True, stdout=None)
+        _run_ffmpeg(
+            '-i', orig_mp4,
+            '-i', file[:-9] + f'est_{idx}.wav',
+            '-c:v', 'copy',
+            '-map', '0:v:0',
+            '-map', '1:a:0',
+            '-shortest', est_mp4,
+        )
 
     rmtree(video_args.pyworkPath)
     rmtree(video_args.pyframesPath)
@@ -257,13 +270,9 @@ def crop_video(video_args, track, cropFile):
 	audioStart  = (track['frame'][0]) / 25
 	audioEnd    = (track['frame'][-1]+1) / 25
 	vOut.release()
-	command = ("ffmpeg -y -i %s -async 1 -ac 1 -vn -acodec pcm_s16le -ar 16000 -threads %d -ss %.3f -to %.3f %s -loglevel panic" % \
-		      (video_args.audioFilePath, video_args.nDataLoaderThread, audioStart, audioEnd, audioTmp)) 
-	output = subprocess.call(command, shell=True, stdout=None) # Crop audio file
+	_run_ffmpeg('-i', video_args.audioFilePath, '-async', '1', '-ac', '1', '-vn', '-acodec', 'pcm_s16le', '-ar', '16000', '-threads', str(video_args.nDataLoaderThread), '-ss', f'{audioStart:.3f}', '-to', f'{audioEnd:.3f}', audioTmp)
 	_, audio = wavfile.read(audioTmp)
-	command = ("ffmpeg -y -i %st.avi -i %s -threads %d -c:v copy -c:a copy %s.avi -loglevel panic" % \
-			  (cropFile, audioTmp, video_args.nDataLoaderThread, cropFile)) # Combine audio and video file
-	output = subprocess.call(command, shell=True, stdout=None)
+	_run_ffmpeg('-i', f'{cropFile}t.avi', '-i', audioTmp, '-threads', str(video_args.nDataLoaderThread), '-c:v', 'copy', '-c:a', 'copy', f'{cropFile}.avi')
 	os.remove(cropFile + 't.avi')
 	return {'track':track, 'proc_track':dets}
 
@@ -335,27 +344,30 @@ def visualization(tracks, est_sources, video_args):
 			vOut.write(image)
 		vOut.release()
 
-		command = ("ffmpeg -y -i %s -i %s -threads %d -c:v copy -c:a copy %s -loglevel panic" % \
-			(os.path.join(video_args.pyaviPath, 'video_only.avi'), (video_args.pycropPath +'/est_%s.wav' %tidx), \
-			video_args.nDataLoaderThread, os.path.join(video_args.pyaviPath,'video_out_%s.avi'%tidx))) 
-		output = subprocess.call(command, shell=True, stdout=None)
+		_run_ffmpeg(
+			'-i', os.path.join(video_args.pyaviPath, 'video_only.avi'),
+			'-i', video_args.pycropPath +'/est_%s.wav' %tidx,
+			'-threads', str(video_args.nDataLoaderThread),
+			'-c:v', 'copy',
+			'-c:a', 'copy',
+			os.path.join(video_args.pyaviPath,'video_out_%s.avi'%tidx),
+		)
 
 
 
 
-		command = "ffmpeg -i %s %s ;" % (
-					os.path.join(video_args.pyaviPath, 'video_out_%s.avi' % tidx),
-					os.path.join(video_args.pyaviPath, 'video_est_%s.mp4' % tidx)
-				)
-		command += f"rm {os.path.join(video_args.pyaviPath, 'video_out_%s.avi' % tidx)}"
-		output = subprocess.call(command, shell=True, stdout=None)
+		video_out = os.path.join(video_args.pyaviPath, 'video_out_%s.avi' % tidx)
+		video_est = os.path.join(video_args.pyaviPath, 'video_est_%s.mp4' % tidx)
+		_run_ffmpeg('-i', video_out, video_est)
+		if os.path.exists(video_out):
+			os.remove(video_out)
 
+	video_avi = os.path.join(video_args.pyaviPath, 'video.avi')
+	video_orig = os.path.join(video_args.pyaviPath, 'video_orig.mp4')
+	video_only = os.path.join(video_args.pyaviPath, 'video_only.avi')
+	audio_wav = os.path.join(video_args.pyaviPath, 'audio.wav')
 
-	command = "ffmpeg -i %s %s ;" % (
-				os.path.join(video_args.pyaviPath, 'video.avi'),
-				os.path.join(video_args.pyaviPath, 'video_orig.mp4')
-			)
-	command += f"rm {os.path.join(video_args.pyaviPath, 'video_only.avi')} ;"
-	command += f"rm {os.path.join(video_args.pyaviPath, 'video.avi')} ;"
-	command += f"rm {os.path.join(video_args.pyaviPath, 'audio.wav')} ;"
-	output = subprocess.call(command, shell=True, stdout=None)
+	_run_ffmpeg('-i', video_avi, video_orig)
+	for f in [video_only, video_avi, audio_wav]:
+		if os.path.exists(f):
+			os.remove(f)

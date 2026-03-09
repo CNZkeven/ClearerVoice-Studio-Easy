@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rustc:*)",
+      "Bash(\"F:/anac/envs/Common/python.exe\":*)",
+      "Read(//d/test/ClearerVoice-Studio-Easy/$USERPROFILE/.cargo/bin/**)",
+      "Bash(\"$USERPROFILE/.cargo/bin/rustc.exe\" --version)",
+      "Bash(\"$USERPROFILE/.cargo/bin/cargo.exe\" --version)",
+      "Bash(export:*)",
+      "Read(//c/Program Files/Microsoft Visual Studio//**)",
+      "Read(//c/Program Files \\(x86\\)/Microsoft Visual Studio//**)",
+      "Bash(\"$USERPROFILE/.cargo/bin/rustup.exe\" show:*)",
+      "Bash(/c/Users/76234/.cargo/bin/rustup.exe show:*)",
+      "Bash(ls:*)",
+      "Bash(cmd.exe:*)"
+    ]
+  }
+}

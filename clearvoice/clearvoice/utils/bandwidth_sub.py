@@ -4,6 +4,12 @@ import librosa
 import os
 from scipy.signal import butter, filtfilt, stft, istft
 
+try:
+    from clearvoice_native import bandwidth_sub as _rust_bandwidth_sub
+    _USE_RUST_BW = True
+except ImportError:
+    _USE_RUST_BW = False
+
 # Step 1: Load audio files
 def load_audio(audio_path):
     audio, sr = librosa.load(audio_path, sr=48000)
@@ -83,6 +89,16 @@ def save_audio(file_path, audio, fs):
 
 
 def bandwidth_sub(low_bandwidth_audio, high_bandwidth_audio, fs=48000):
+    if _USE_RUST_BW:
+        try:
+            return _rust_bandwidth_sub(
+                np.asarray(low_bandwidth_audio, dtype=np.float64),
+                np.asarray(high_bandwidth_audio, dtype=np.float64),
+                fs,
+            )
+        except Exception:
+            pass
+
     # Detect effective bandwidth of the first signal
     f_low, f_high = detect_bandwidth(low_bandwidth_audio, fs)
         

@@ -84,7 +84,7 @@ def get_learning_rate(optimizer):
     """
     return optimizer.param_groups[0]["lr"]
 
-def reload_for_eval(model, checkpoint_dir, use_cuda):
+def reload_for_eval(model, checkpoint_dir, use_cuda, verbose=False):
     """Reloads a model for evaluation from the specified checkpoint directory.
 
     Args:
@@ -129,7 +129,7 @@ def reload_for_eval(model, checkpoint_dir, use_cuda):
              state[key] = pretrained_model[key.replace('module.', '')]
         elif 'module.'+key in pretrained_model and state[key].shape == pretrained_model['module.'+key].shape:
              state[key] = pretrained_model['module.'+key]
-        elif self.print: print(f'{key} not loaded')
+        elif verbose: print(f'{key} not loaded')
     model.load_state_dict(state)
 
     print('=> Reload well-trained model {} for decoding.'.format(model_name))
@@ -307,7 +307,7 @@ def istft(x, args, slen=None, center=False, normalized=False, periodic=False, on
         output = torch.istft(x, n_fft=fft_len, hop_length=win_inc, win_length=win_len,
                               window=window, center=center, normalized=normalized,
                               onesided=onesided, length=slen, return_complex=False)
-    except:
+    except Exception:
         # Handle potential errors by converting x to a complex tensor
         x_complex = torch.view_as_complex(x)
         output = torch.istft(x_complex, n_fft=fft_len, hop_length=win_inc, win_length=win_len,

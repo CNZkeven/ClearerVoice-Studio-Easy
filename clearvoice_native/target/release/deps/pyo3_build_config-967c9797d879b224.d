@@ -1,0 +1,14 @@
+D:\test\ClearerVoice-Studio-Easy\clearvoice_native\target\release\deps\pyo3_build_config-967c9797d879b224.d: C:\Users\76234\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\pyo3-build-config-0.22.6\src\lib.rs C:\Users\76234\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\pyo3-build-config-0.22.6\src\errors.rs C:\Users\76234\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\pyo3-build-config-0.22.6\src\impl_.rs D:\test\ClearerVoice-Studio-Easy\clearvoice_native\target\release\build\pyo3-build-config-1d2711143cff9de9\out/pyo3-build-config-file.txt D:\test\ClearerVoice-Studio-Easy\clearvoice_native\target\release\build\pyo3-build-config-1d2711143cff9de9\out/pyo3-build-config.txt
+
+D:\test\ClearerVoice-Studio-Easy\clearvoice_native\target\release\deps\libpyo3_build_config-967c9797d879b224.rlib: C:\Users\76234\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\pyo3-build-config-0.22.6\src\lib.rs C:\Users\76234\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\pyo3-build-config-0.22.6\src\errors.rs C:\Users\76234\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\pyo3-build-config-0.22.6\src\impl_.rs D:\test\ClearerVoice-Studio-Easy\clearvoice_native\target\release\build\pyo3-build-config-1d2711143cff9de9\out/pyo3-build-config-file.txt D:\test\ClearerVoice-Studio-Easy\clearvoice_native\target\release\build\pyo3-build-config-1d2711143cff9de9\out/pyo3-build-config.txt
+
+D:\test\ClearerVoice-Studio-Easy\clearvoice_native\target\release\deps\libpyo3_build_config-967c9797d879b224.rmeta: C:\Users\76234\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\pyo3-build-config-0.22.6\src\lib.rs C:\Users\76234\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\pyo3-build-config-0.22.6\src\errors.rs C:\Users\76234\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\pyo3-build-config-0.22.6\src\impl_.rs D:\test\ClearerVoice-Studio-Easy\clearvoice_native\target\release\build\pyo3-build-config-1d2711143cff9de9\out/pyo3-build-config-file.txt D:\test\ClearerVoice-Studio-Easy\clearvoice_native\target\release\build\pyo3-build-config-1d2711143cff9de9\out/pyo3-build-config.txt
+
+C:\Users\76234\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\pyo3-build-config-0.22.6\src\lib.rs:
+C:\Users\76234\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\pyo3-build-config-0.22.6\src\errors.rs:
+C:\Users\76234\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\pyo3-build-config-0.22.6\src\impl_.rs:
+D:\test\ClearerVoice-Studio-Easy\clearvoice_native\target\release\build\pyo3-build-config-1d2711143cff9de9\out/pyo3-build-config-file.txt:
+D:\test\ClearerVoice-Studio-Easy\clearvoice_native\target\release\build\pyo3-build-config-1d2711143cff9de9\out/pyo3-build-config.txt:
+
+# env-dep:CARGO_PKG_VERSION=0.22.6
+# env-dep:OUT_DIR=D:\\test\\ClearerVoice-Studio-Easy\\clearvoice_native\\target\\release\\build\\pyo3-build-config-1d2711143cff9de9\\out
