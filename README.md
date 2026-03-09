@@ -2,6 +2,10 @@
 
 一个面向推理落地的语音处理项目，提供简化版的 **ClearVoice** 工作流，支持语音增强、语音分离、目标说话人提取和语音超分辨率，并额外集成了可选的 **Rust 原生扩展** 用于部分音频预处理加速。
 
+
+<img width="1892" height="1338" alt="image" src="https://github.com/user-attachments/assets/c4dfb33f-e044-4e80-9a6e-f483b8ce318b" />
+
+
 本仓库适合以下场景：
 
 - 快速体验 ClearVoice 推理能力
