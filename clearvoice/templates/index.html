@@ -38,6 +38,15 @@
         @media (max-width: 500px) { .config-grid { grid-template-columns: 1fr; } }
         .config-item { display: flex; flex-direction: column; gap: 6px; }
         .config-item label { font-size: 13px; color: var(--ios-text-secondary); }
+        .config-label { display: flex; align-items: center; gap: 6px; }
+        .config-label-text { line-height: 1.4; }
+        .config-help { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgba(0,122,255,0.22); background: rgba(0,122,255,0.08); color: var(--ios-primary); cursor: help; font-size: 11px; flex-shrink: 0; }
+        .config-help i { font-size: 10px; }
+        .config-tooltip { position: absolute; left: 50%; bottom: calc(100% + 10px); transform: translateX(-50%) translateY(4px); width: min(260px, calc(100vw - 48px)); padding: 10px 12px; border-radius: 10px; background: rgba(28,28,30,0.96); color: white; box-shadow: 0 10px 24px rgba(0,0,0,0.18); opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.18s ease, transform 0.18s ease; z-index: 20; }
+        .config-tooltip::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border-width: 6px; border-style: solid; border-color: rgba(28,28,30,0.96) transparent transparent transparent; }
+        .config-help:hover .config-tooltip, .config-help:focus-visible .config-tooltip { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+        .config-tooltip-title { font-size: 12px; font-weight: 600; margin-bottom: 6px; color: #D6E7FF; }
+        .config-tooltip-text { display: block; font-size: 12px; line-height: 1.5; color: rgba(255,255,255,0.92); }
         .config-item input, .config-item select { padding: 10px 12px; border: 1px solid var(--ios-border); border-radius: 8px; font-size: 14px; background: white; }
         .file-upload { border: 2px dashed var(--ios-border); border-radius: 12px; padding: 30px 20px; text-align: center; cursor: pointer; transition: all 0.2s; }
         .file-upload:hover { border-color: var(--ios-primary); background: rgba(0,122,255,0.04); }
@@ -174,6 +183,70 @@
     <div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div><div class="loading-text">处理中，请稍候...</div></div>
     <script>
         const API_BASE = '';
+        const PARAMETER_HELP = {
+            one_time_decode_length: { description: '控制单次送入模型处理的音频时长。值更大通常能减少分段次数，但会增加显存和内存压力。', recommended: { SE_16K: '20', SE_48K: '20', SS_16K: '2', SR_48K: '20', TSE_16K: '3' } },
+            decode_window: { description: '控制长音频分段推理时的窗口大小。窗口越大，拼接次数越少，但资源占用会更高。', recommended: { SE_16K: '4', SE_48K: '4', SS_16K: '2', SR_48K: '4', TSE_16K: '3' } },
+            win_type: { description: '设置短时分析使用的窗函数类型，用于降低分帧边界带来的频谱泄漏。', recommended: 'hamming' },
+            win_len: { description: '短时分析窗口长度，决定每一帧覆盖的采样点数量。通常保持默认更稳妥。', recommended: '1920' },
+            win_inc: { description: '相邻分析窗口之间的步长。步长越小，重叠越多，计算量也越高。', recommended: '384' },
+            fft_len: { description: '傅里叶变换长度，影响频谱分辨率。一般建议与训练配置保持一致。', recommended: '1920' },
+            num_mels: { description: '梅尔滤波器组数量，决定频谱映射到梅尔域后的维度大小。', recommended: '60' },
+            num_spks: { description: '需要分离的说话人数。若与真实人数不符，分离效果通常会下降。', recommended: '2' },
+            encoder_kernel_size: { description: '编码器卷积核大小，影响前端提取局部时域特征的感受野。', recommended: '16' },
+            encoder_embedding_dim: { description: '编码器输出的特征维度。维度越大，表达能力越强，但计算成本也更高。', recommended: '512' },
+            mossformer_sequence_dim: { description: 'MossFormer 主干网络使用的序列特征维度，决定中间表示容量。', recommended: '512' },
+            num_mossformer_layer: { description: 'MossFormer 堆叠层数。层数增加通常提升建模能力，但推理更慢。', recommended: '24' },
+            network_reference_cue: { description: '目标说话人提取时采用的参考线索类型，可使用唇动信息或参考音频。', recommended: 'lip' },
+            network_reference_backbone: { description: '参考网络的骨干结构，决定参考特征提取模块的复杂度。', recommended: 'resnet18' },
+            network_reference_emb_size: { description: '参考网络输出的嵌入向量维度，用于描述目标说话人或视觉参考特征。', recommended: '256' },
+            network_audio_masknet_numspks: { description: '掩码网络假定需要同时建模的目标说话人数。通常单目标提取保持 1 即可。', recommended: '1' },
+            network_audio_masknet_chunksize: { description: '掩码网络分块处理时的块大小，影响时序上下文长度和推理开销。', recommended: '250' },
+            network_audio_intra_numlayers: { description: '音频内部建模模块的层数。层数越深，建模能力越强，但速度越慢。', recommended: '24' },
+            network_audio_intra_nhead: { description: '多头注意力的头数，用于控制注意力并行分支数量。', recommended: '8' },
+            network_audio_intra_dffn: { description: '前馈网络隐藏层维度，影响每层的非线性表达能力。', recommended: '1024' }
+        };
+
+        function escapeHtml(value) {
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function getModelHelpKey(modelName) {
+            if (modelName.includes('SE_16K')) return 'SE_16K';
+            if (modelName.includes('SE_48K')) return 'SE_48K';
+            if (modelName.includes('SS_16K')) return 'SS_16K';
+            if (modelName.includes('SR_48K')) return 'SR_48K';
+            if (modelName.includes('TSE_16K')) return 'TSE_16K';
+            return '';
+        }
+
+        function buildConfigLabel(item, modelName) {
+            const help = PARAMETER_HELP[item.key];
+            if (!help) {
+                return '<label>' + item.label + '</label>';
+            }
+
+            const modelKey = getModelHelpKey(modelName);
+            const recommended = typeof help.recommended === 'object'
+                ? help.recommended[modelKey] || item.default
+                : help.recommended;
+
+            return '<label class="config-label">'
+                + '<span class="config-label-text">' + escapeHtml(item.label) + '</span>'
+                + '<span class="config-help" tabindex="0" aria-label="查看参数说明">'
+                + '<i class="fas fa-circle-info"></i>'
+                + '<span class="config-tooltip">'
+                + '<span class="config-tooltip-title">参数说明</span>'
+                + '<span class="config-tooltip-text">作用：' + escapeHtml(help.description) + '</span>'
+                + '<span class="config-tooltip-text">建议默认值：' + escapeHtml(recommended) + '</span>'
+                + '</span>'
+                + '</span>'
+                + '</label>';
+        }
         let currentTask = 'speech_enhancement';
         let currentModel = '';
         let selectedFile = null;
@@ -255,7 +328,7 @@
                 } else {
                     input = '<input type="' + item.type + '" id="config_' + item.key + '" value="' + item.default + '" step="any">';
                 }
-                div.innerHTML = '<label>' + item.label + '</label>' + input;
+                div.innerHTML = buildConfigLabel(item, modelName) + input;
                 grid.appendChild(div);
             });
             
