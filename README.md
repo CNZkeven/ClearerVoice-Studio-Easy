@@ -280,12 +280,6 @@ python -m maturin build --release
 python -m pip install --force-reinstall dist\clearvoice_native-0.1.0-cp313-cp313-win_amd64.whl
 ```
 
-如果你已经安装了 Visual Studio 2022 和 Windows SDK，也可以直接使用仓库提供的脚本：
-
-```bash
-build_rust.bat
-```
-
 ## Basic Verification
 
 ### 检查模型是否能正常加载
