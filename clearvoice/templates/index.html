@@ -40,11 +40,13 @@
         .config-item label { font-size: 13px; color: var(--ios-text-secondary); }
         .config-label { display: flex; align-items: center; gap: 6px; }
         .config-label-text { line-height: 1.4; }
-        .config-help { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgba(0,122,255,0.22); background: rgba(0,122,255,0.08); color: var(--ios-primary); cursor: help; font-size: 11px; flex-shrink: 0; }
+        .config-help { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgba(0,122,255,0.22); background: rgba(0,122,255,0.08); color: var(--ios-primary); cursor: help; font-size: 11px; flex-shrink: 0; }
         .config-help i { font-size: 10px; }
-        .config-tooltip { position: absolute; left: 50%; bottom: calc(100% + 10px); transform: translateX(-50%) translateY(4px); width: min(260px, calc(100vw - 48px)); padding: 10px 12px; border-radius: 10px; background: rgba(28,28,30,0.96); color: white; box-shadow: 0 10px 24px rgba(0,0,0,0.18); opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.18s ease, transform 0.18s ease; z-index: 20; }
-        .config-tooltip::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border-width: 6px; border-style: solid; border-color: rgba(28,28,30,0.96) transparent transparent transparent; }
-        .config-help:hover .config-tooltip, .config-help:focus-visible .config-tooltip { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+        .config-tooltip { position: fixed; top: 0; left: 0; width: min(280px, calc(100vw - 24px)); padding: 10px 12px; border-radius: 10px; background: rgba(28,28,30,0.96); color: white; box-shadow: 0 10px 24px rgba(0,0,0,0.18); opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.18s ease, transform 0.18s ease; transform: translateY(4px); z-index: 10000; }
+        .config-tooltip.show { opacity: 1; visibility: visible; transform: translateY(0); }
+        .config-tooltip::after { content: ''; position: absolute; left: var(--tooltip-arrow-left, 50%); transform: translateX(-50%); border-width: 6px; border-style: solid; }
+        .config-tooltip[data-placement="top"]::after { top: 100%; border-color: rgba(28,28,30,0.96) transparent transparent transparent; }
+        .config-tooltip[data-placement="bottom"]::after { bottom: 100%; border-color: transparent transparent rgba(28,28,30,0.96) transparent; }
         .config-tooltip-title { font-size: 12px; font-weight: 600; margin-bottom: 6px; color: #D6E7FF; }
         .config-tooltip-text { display: block; font-size: 12px; line-height: 1.5; color: rgba(255,255,255,0.92); }
         .config-item input, .config-item select { padding: 10px 12px; border: 1px solid var(--ios-border); border-radius: 8px; font-size: 14px; background: white; }
@@ -180,6 +182,11 @@
             </div>
         </div>
     </div>
+    <div id="configTooltip" class="config-tooltip" role="tooltip" aria-hidden="true">
+        <span class="config-tooltip-title">参数说明</span>
+        <span class="config-tooltip-text" id="configTooltipDesc"></span>
+        <span class="config-tooltip-text" id="configTooltipRecommended"></span>
+    </div>
     <div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div><div class="loading-text">处理中，请稍候...</div></div>
     <script>
         const API_BASE = '';
@@ -237,13 +244,8 @@
 
             return '<label class="config-label">'
                 + '<span class="config-label-text">' + escapeHtml(item.label) + '</span>'
-                + '<span class="config-help" tabindex="0" aria-label="查看参数说明">'
+                + '<span class="config-help" tabindex="0" aria-label="查看参数说明" data-description="' + escapeHtml(help.description) + '" data-recommended="' + escapeHtml(recommended) + '">'
                 + '<i class="fas fa-circle-info"></i>'
-                + '<span class="config-tooltip">'
-                + '<span class="config-tooltip-title">参数说明</span>'
-                + '<span class="config-tooltip-text">作用：' + escapeHtml(help.description) + '</span>'
-                + '<span class="config-tooltip-text">建议默认值：' + escapeHtml(recommended) + '</span>'
-                + '</span>'
                 + '</span>'
                 + '</label>';
         }
@@ -252,6 +254,56 @@
         let selectedFile = null;
         let configData = {};
         let allModels = [];
+        let activeConfigHelp = null;
+
+        function getTooltipElements() {
+            return {
+                tooltip: document.getElementById('configTooltip'),
+                description: document.getElementById('configTooltipDesc'),
+                recommended: document.getElementById('configTooltipRecommended')
+            };
+        }
+
+        function positionConfigTooltip(target) {
+            const { tooltip } = getTooltipElements();
+            const rect = target.getBoundingClientRect();
+            const margin = 12;
+            const gap = 10;
+            const tooltipRect = tooltip.getBoundingClientRect();
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+
+            let left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
+            left = Math.max(margin, Math.min(left, viewportWidth - tooltipRect.width - margin));
+
+            const showOnTop = rect.top >= tooltipRect.height + gap + 12;
+            let top = showOnTop ? rect.top - tooltipRect.height - gap : rect.bottom + gap;
+            top = Math.max(margin, Math.min(top, viewportHeight - tooltipRect.height - margin));
+
+            tooltip.dataset.placement = showOnTop ? 'top' : 'bottom';
+            tooltip.style.left = left + 'px';
+            tooltip.style.top = top + 'px';
+
+            const arrowLeft = rect.left + (rect.width / 2) - left;
+            tooltip.style.setProperty('--tooltip-arrow-left', Math.max(18, Math.min(tooltipRect.width - 18, arrowLeft)) + 'px');
+        }
+
+        function showConfigTooltip(target) {
+            const { tooltip, description, recommended } = getTooltipElements();
+            description.textContent = '作用：' + (target.dataset.description || '');
+            recommended.textContent = '建议默认值：' + (target.dataset.recommended || '');
+            tooltip.classList.add('show');
+            tooltip.setAttribute('aria-hidden', 'false');
+            activeConfigHelp = target;
+            positionConfigTooltip(target);
+        }
+
+        function hideConfigTooltip() {
+            const { tooltip } = getTooltipElements();
+            tooltip.classList.remove('show');
+            tooltip.setAttribute('aria-hidden', 'true');
+            activeConfigHelp = null;
+        }
         
         async function loadTasks() {
             const response = await fetch(API_BASE + '/api/tasks');
@@ -558,6 +610,37 @@
                 pathInput.value = userInput;
                 pathInput.blur();
             }
+        });
+
+        document.addEventListener('mouseover', function(e) {
+            const help = e.target.closest('.config-help');
+            if (help) showConfigTooltip(help);
+        });
+
+        document.addEventListener('mouseout', function(e) {
+            const help = e.target.closest('.config-help');
+            if (!help) return;
+            const related = e.relatedTarget;
+            if (related && help.contains(related)) return;
+            hideConfigTooltip();
+        });
+
+        document.addEventListener('focusin', function(e) {
+            const help = e.target.closest('.config-help');
+            if (help) showConfigTooltip(help);
+        });
+
+        document.addEventListener('focusout', function(e) {
+            const help = e.target.closest('.config-help');
+            if (help) hideConfigTooltip();
+        });
+
+        window.addEventListener('scroll', function() {
+            if (activeConfigHelp) positionConfigTooltip(activeConfigHelp);
+        }, true);
+
+        window.addEventListener('resize', function() {
+            if (activeConfigHelp) positionConfigTooltip(activeConfigHelp);
         });
         
         loadTasks();
